@@ -36,6 +36,10 @@ class GuardianDownloader(BaseDownloader):
         xw_data = json.loads(soup.find('div', 
                     attrs={'class':'js-crossword'}).get('data-crossword-data'))
 
+        xw_notes = soup.find('div', class_='crossword__instructions')
+        if xw_notes:
+            xw_data['notes'] = xw_notes.decode_contents()
+
         return xw_data
 
     def parse_xword(self, xword_data):
@@ -78,6 +82,9 @@ class GuardianDownloader(BaseDownloader):
                     key=lambda x: (x.get('number'), x.get('direction')))]
 
         puzzle.clues = clues
+
+        if xword_data.get('notes'):
+            puzzle.notes = xword_data.get('notes')
 
         return puzzle
 
@@ -188,3 +195,19 @@ class GuardianQuipticDownloader(GuardianDownloader):
     def matches_url(url_components):
         return ('theguardian.com' in url_components.netloc
                     and '/crosswords/quiptic' in url_components.path)
+
+
+class GuardianQuickCrypticDownloader(GuardianDownloader):
+    command = 'grdt'
+    outlet = 'Guardian Quick Cryptic'
+    outlet_prefix = 'Guardian Quick Cryptic'
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.landing_page += '/series/quick-cryptic'
+
+    @staticmethod
+    def matches_url(url_components):
+        return ('theguardian.com' in url_components.netloc
+                    and '/crosswords/quick-cryptic' in url_components.path)
